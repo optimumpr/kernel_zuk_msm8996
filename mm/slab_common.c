@@ -28,7 +28,7 @@
 enum slab_state slab_state;
 LIST_HEAD(slab_caches);
 DEFINE_MUTEX(slab_mutex);
-struct kmem_cache *kmem_cache;
+struct kmem_cache *kmem_cache __ro_after_init;
 
 /*
  * Set of flags that will prevent slab merging
