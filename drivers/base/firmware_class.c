@@ -1118,7 +1118,6 @@ static int fw_load_from_user_helper(struct firmware *firmware,
 	return _request_firmware_load(fw_priv, desc->opt_flags, timeout);
 }
 
-#ifdef CONFIG_FW_CACHE
 /* kill pending requests without uevent to avoid blocking suspend */
 static void kill_requests_without_uevent(void)
 {
@@ -1132,7 +1131,6 @@ static void kill_requests_without_uevent(void)
 	}
 	mutex_unlock(&fw_lock);
 }
-#endif
 
 #else /* CONFIG_FW_LOADER_USER_HELPER */
 static inline int
@@ -1145,9 +1143,7 @@ fw_load_from_user_helper(struct firmware *firmware,
 /* No abort during direct loading */
 #define is_fw_load_aborted(buf) false
 
-#ifdef CONFIG_PM_SLEEP
 static inline void kill_requests_without_uevent(void) { }
-#endif
 
 #endif /* CONFIG_FW_LOADER_USER_HELPER */
 
@@ -1596,7 +1592,6 @@ request_firmware_nowait_into_buf(
 }
 EXPORT_SYMBOL_GPL(request_firmware_nowait_into_buf);
 
-#ifdef CONFIG_FW_CACHE
 static ASYNC_DOMAIN_EXCLUSIVE(fw_cache_domain);
 
 /**
@@ -1923,12 +1918,6 @@ static int fw_suspend(void)
 static struct syscore_ops fw_syscore_ops = {
 	.suspend = fw_suspend,
 };
-#else
-static int fw_cache_piggyback_on_request(const char *name)
-{
-	return 0;
-}
-#endif
 
 static void __init fw_cache_init(void)
 {
@@ -1936,7 +1925,6 @@ static void __init fw_cache_init(void)
 	INIT_LIST_HEAD(&fw_cache.head);
 	fw_cache.state = FW_LOADER_NO_CACHE;
 
-#ifdef CONFIG_FW_CACHE
 	spin_lock_init(&fw_cache.name_lock);
 	INIT_LIST_HEAD(&fw_cache.fw_names);
 
@@ -1947,12 +1935,12 @@ static void __init fw_cache_init(void)
 	register_pm_notifier(&fw_cache.pm_notify);
 
 	register_syscore_ops(&fw_syscore_ops);
-#endif
 }
 
 static int __init firmware_class_init(void)
 {
 	fw_cache_init();
+
 #ifdef CONFIG_FW_LOADER_USER_HELPER
 	register_reboot_notifier(&fw_shutdown_nb);
 	return class_register(&firmware_class);
